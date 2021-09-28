@@ -1,12 +1,11 @@
 {-
 ---
 fulltitle: "In class exercise: Semigroup, Monoid and Foldable"
+date: September 29, 2019
 ---
 -}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances #-}
-
--- {-# OPTIONS_GHC -fdefer-type-errors #-}
 
 module MonoidFoldable where
 
@@ -214,7 +213,7 @@ tt1 = all ((== 1) . length) t1 ~?= True
 
 {-
 Finally, look at the documentation for the
-[Foldable](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html)
+[Foldable](https://hackage.haskell.org/package/base-4.14.1.0/docs/Data-Foldable.html)
 class and find some other tree operations that we get automatically for
 free.
 -}

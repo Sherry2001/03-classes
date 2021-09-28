@@ -23,4 +23,5 @@
 - ignore: {name: "Use mconcat"}
 - ignore: {name: "Monoid law, left identity"}
 - ignore: {name: "Use ||"}
-
+- ignore: {name: "Use newtype instead of data"}
+- ignore: {name: "Use Control.Monad.void"}
