@@ -10,6 +10,7 @@ date: September 27, 2021
 module Classes where
 
 import Data.Char (Char)
+import qualified Data.List as List
 import Test.HUnit (Test (TestList), runTestTT, (~:), (~?=))
 import Text.Read (Read)
 import Prelude hiding (lookup)
@@ -136,8 +137,8 @@ It might seem annoying, though, that we had to provide both `(==)` and
 `(/=)`...
 
 Fortunately, we don't.  Type classes are allowed to provide "default
-instances".  For example, the full definition of `Eq` from the Prelude
-is:
+definitions" for member functions.  For example, the full definition of `Eq`
+from the Prelude is:
 
     class Eq a where
         (==), (/=) :: a -> a -> Bool
@@ -160,7 +161,7 @@ data Tree a = Empty | Branch a (Tree a) (Tree a)
 {-
 No worries, Haskell lets us put type class constraints on our instance
 declarations. See if you can finish this instance for trees. (No cheating
-by using 'deriving' like we saw in [`Lec4`](Lec4.html)!)
+by using 'deriving' like we saw in [`Datatypes`](Datatypes.html)!)
 
 -}
 
@@ -178,6 +179,21 @@ Let's try it out:
 tree1, tree2 :: Tree Int
 tree1 = Branch 3 (Branch 2 Empty Empty) (Branch 1 Empty Empty)
 tree2 = Branch 3 Empty Empty
+
+{-
+either inline
+-}
+
+-- >>> tree1 == tree1
+-- True
+-- >>> tree1 == tree2
+-- False
+-- >>> tree1 == Empty
+-- False
+
+{-
+or as unit tests.
+-}
 
 testTreeEq :: Test
 testTreeEq =
@@ -213,10 +229,6 @@ need to use the `(==)` function to check if we've reached the right
 pair.  So, the type of lookup records that there must be an `Eq`
 instance for `a`; otherwise, the compiler wouldn't have an
 implementation of `(==)` for this type.
-
-Try commenting out the type of `lookup`. What type does Haskell infer?
-
-    ghci> :type lookup
 
 What about a function that uses `lookup`, what is its type? Note how the
 equality constraint propagates to the type of this function.
@@ -290,6 +302,8 @@ data Shape
   deriving (Eq)
 
 {-
+The 'deriving' keywords instructs the compiler to automatically
+create an instance of the `Eq` type class for the datatype.
 Haskell can derive an `Eq` instance as long as it already has one
 available for any data that appears as arguments to constructors.
 Since it already knows how to compare `Double`s, this one works.
@@ -541,9 +555,19 @@ What properties should instances of `Ord` satisfy?  Write some below:
 
 <undefined>
 
-`Ord` is derivable, like `Eq`, `Show` and `Read`.  If you're writing
-your own `Ord` instance, you only need to provide `compare` or `(<=)`;
-Haskell can fill in the rest.
+`Ord` is derivable, like `Eq`, `Show` and `Read`. However, note that
+because of the superclass constraint, we *must* derive `Eq` at the same time
+as `Ord`.
+-}
+
+data MyThree = One | Two | Three deriving (Eq, Ord)
+
+{-
+>
+
+Alternatively, if you're writing your own `Ord` instance, you only need to
+provide `compare` or `(<=)`; there are default definitions of the rest.
+(Don't forget to make an instance of the `Eq` class first.)
 
 The `Ord` type class shows up all over the standard library.  For
 example, `Data.List` has a function which sorts lists:
@@ -551,8 +575,18 @@ example, `Data.List` has a function which sorts lists:
     sort :: Ord a => [a] -> [a]
 
 As you'd expect, we need to know an ordering on `a`s in order to sort
-lists of them!
+lists of them! But if this ordering exists, `sort` can use it.
+-}
 
+-- >>> x
+{-
+>
+-}
+
+sorted :: [MyThree]
+sorted = List.sort [Two, One, Three]
+
+{-
 Overloading and Syntax
 ======================
 
@@ -604,35 +638,6 @@ What happens in this expression? The `(+)` must have arguments that are the
 same type, and `2.0` is a `Double`, so the type system knows that the
 `Integer` `1` must first be converted to a `Double` before it can be added to
 `2.0`.
-
-The `Num` type class can also be (ab)-used for types that aren't traditionally
-considered numbers. What do you think of this instance?
--}
-
-instance Num a => Num [a] where
-  fromInteger = repeat . fromInteger
-  (+) = zipWith (+)
-  (-) = zipWith (-)
-  (*) = zipWith (*)
-  negate = map negate
-  abs = map abs
-  signum = map signum
-
-{-
-Code that uses this instance looks a bit strange...
--}
-
-one :: [Int]
-one = 1 -- the fromInteger instance converts the Integer 1 into a list
--- by first converting it to an Int and then repeating it
--- as an infinite list.
-
-seven :: [Int]
-seven = 3 + 4
-
-{-
-... but is it wrong? Do the operations of `(+)` and `(-)` behave like you would
-expect them to?
 
 Enum and Bounded
 ================
@@ -694,13 +699,45 @@ Of course, if we tried to write
     biggestInteger :: Integer
     biggestInteger = maxBound
 
-we would get a type error, since `Integer`s are unbounded.  Again the
-compiler protects us from basic mistakes like this.
+we would get a type error, since `Integer`s are unbounded as long as they can
+be stored in memory. (Haskell uses a data structure to represent as many
+digits as we need.) Again the compiler protects us from basic mistakes like
+this.
 
 Many standard library types support `Enum` and `Bounded`.  They are
 also both derivable - but only for datatypes whose constructors don't
 take any arguments.
 
+For example, if we have a datatype for the days of the week
+-}
+
+data Day = Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday
+  deriving (Eq, Ord, Enum, Bounded, Read, Show)
+
+{-
+>
+
+Then we can see the first day
+-}
+
+-- >>> minBound :: Day
+
+{-
+and last day
+-}
+
+-- >>> maxBound :: Day
+
+{-
+as well as enumerate a list of all of them.
+-}
+
+-- >>> daysOfWeek
+
+daysOfWeek :: [Day]
+daysOfWeek = [minBound ..]
+
+{-
 Functor
 =======
 
